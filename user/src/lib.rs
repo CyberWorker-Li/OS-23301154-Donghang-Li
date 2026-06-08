@@ -13,20 +13,9 @@ pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
 pub fn yield_() -> isize { sys_yield() }
 pub fn get_time() -> isize { sys_get_time() }
 
-fn clear_bss() {
-    unsafe extern "C" {
-        fn start_bss();
-        fn end_bss();
-    }
-    let start_bss_ptr = start_bss as *const () as usize;
-    let end_bss_ptr = end_bss as *const () as usize;
-    (start_bss_ptr..end_bss_ptr).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
-}
-
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
 pub extern "C" fn _start() -> ! {
-    clear_bss();
     exit(main());
     panic!("unreachable after sys_exit!");
 }

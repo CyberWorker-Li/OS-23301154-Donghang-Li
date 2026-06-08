@@ -1,17 +1,29 @@
-use core::arch::{asm, global_asm};
-use riscv::register::scause::{self, Exception, Interrupt, Trap};
-use riscv::register::stvec::{self, TrapMode};
-use riscv::register::stval;
-use riscv::register::sie;
-use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
-use crate::task::{current_trap_cx, current_user_token, exit_current_and_run_next, suspend_current_and_run_next};
-use crate::timer::set_next_trigger;
-use crate::syscall::syscall;
-
-mod context;
-pub use context::TrapContext;
+use core::arch::{global_asm, asm};
 
 global_asm!(include_str!("trap.S"));
+
+use riscv::register::{
+    mtvec::TrapMode,
+    stvec,
+    scause::{
+        self,
+        Trap,
+        Exception,
+        Interrupt,
+    },
+    stval,
+    sie,
+};
+
+use crate::syscall::syscall;
+use crate::task::{
+    exit_current_and_run_next,
+    suspend_current_and_run_next,
+    current_user_token,
+    current_trap_cx,
+};
+use crate::timer::set_next_trigger;
+use crate::config::{TRAP_CONTEXT, TRAMPOLINE};
 
 pub fn init() {
     set_kernel_trap_entry();
@@ -41,11 +53,8 @@ pub fn trap_handler() -> ! {
     let stval = stval::read();
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
-            println!("[kernel] UserEnvCall: old sepc={:#x}", cx.sepc);
             cx.sepc += 4;
-            println!("[kernel] UserEnvCall: new sepc={:#x}", cx.sepc);
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
-            println!("[kernel] UserEnvCall: syscall return = {}", cx.x[10]);
         }
         Trap::Exception(Exception::StoreFault) |
         Trap::Exception(Exception::StorePageFault) => {
@@ -61,11 +70,7 @@ pub fn trap_handler() -> ! {
             suspend_current_and_run_next();
         }
         _ => {
-            if scause.bits() == 9 {
-                cx.sepc += 4;
-            } else {
-                panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
-            }
+            panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
         }
     }
     trap_return();
@@ -81,7 +86,6 @@ pub fn trap_return() -> ! {
         fn __restore();
     }
     let restore_va = __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
-    println!("[kernel] trap_return: restore_va={:#x}, trap_cx_ptr={:#x}, user_satp={:#x}", restore_va, trap_cx_ptr, user_satp);
     unsafe {
         asm!(
             "fence.i",
@@ -92,6 +96,7 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     }
+
     panic!("Unreachable in trap_return!");
 }
 
@@ -99,3 +104,6 @@ pub fn trap_return() -> ! {
 pub fn trap_from_kernel() -> ! {
     panic!("a trap from kernel!");
 }
+
+pub use context::TrapContext;
+mod context;
