@@ -178,39 +178,30 @@ impl MemorySet {
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
-        println!(".text [{:#x}, {:#x})", stext as *const () as usize, etext as *const () as usize);
-        println!(".rodata [{:#x}, {:#x})", srodata as *const () as usize, erodata as *const () as usize);
-        println!(".data [{:#x}, {:#x})", sdata as *const () as usize, edata as *const () as usize);
-        println!(".bss [{:#x}, {:#x})", sbss_with_stack as *const () as usize, ebss as *const () as usize);
-        println!("mapping .text section");
         memory_set.push(MapArea::new(
             (stext as *const () as usize).into(),
             (etext as *const () as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::X,
         ), None);
-        println!("mapping .rodata section");
         memory_set.push(MapArea::new(
             (srodata as *const () as usize).into(),
             (erodata as *const () as usize).into(),
             MapType::Identical,
             MapPermission::R,
         ), None);
-        println!("mapping .data section");
         memory_set.push(MapArea::new(
             (sdata as *const () as usize).into(),
             (edata as *const () as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None);
-        println!("mapping .bss section");
         memory_set.push(MapArea::new(
             (sbss_with_stack as *const () as usize).into(),
             (ebss as *const () as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None);
-        println!("mapping physical memory");
         memory_set.push(MapArea::new(
             (ekernel as *const () as usize).into(),
             MEMORY_END.into(),

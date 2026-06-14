@@ -41,11 +41,8 @@ pub fn trap_handler() -> ! {
     let stval = stval::read();
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
-            println!("[kernel] UserEnvCall: old sepc={:#x}", cx.sepc);
             cx.sepc += 4;
-            println!("[kernel] UserEnvCall: new sepc={:#x}", cx.sepc);
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
-            println!("[kernel] UserEnvCall: syscall return = {}", cx.x[10]);
         }
         Trap::Exception(Exception::StoreFault) |
         Trap::Exception(Exception::StorePageFault) => {
@@ -81,7 +78,6 @@ pub fn trap_return() -> ! {
         fn __restore();
     }
     let restore_va = __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
-    println!("[kernel] trap_return: restore_va={:#x}, trap_cx_ptr={:#x}, user_satp={:#x}", restore_va, trap_cx_ptr, user_satp);
     unsafe {
         asm!(
             "fence.i",
@@ -92,7 +88,6 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     }
-    panic!("Unreachable in trap_return!");
 }
 
 #[no_mangle]

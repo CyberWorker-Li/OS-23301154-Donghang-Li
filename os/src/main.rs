@@ -2,8 +2,6 @@
 #![no_main]
 #![feature(alloc_error_handler)]
 
-use core::arch::global_asm;
-
 extern crate alloc;
 
 #[macro_use]
@@ -13,15 +11,16 @@ extern crate bitflags;
 mod console;
 mod lang_items;
 mod sbi;
-mod syscall;
-mod trap;
-mod loader;
 mod config;
+mod loader;
+mod mm;
+mod sync;
+mod syscall;
 mod task;
 mod timer;
-mod sync;
-mod mm;
+mod trap;
 
+use core::arch::global_asm;
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
@@ -38,16 +37,14 @@ fn clear_bss() {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn rust_main() -> ! {
     clear_bss();
-    println!("[kernel] Hello, world!");
-    mm::init();
-    println!("[kernel] back to world!");
-    mm::remap_test();
+    println!("[kernel] boot");
     trap::init();
+    mm::init();
+    mm::remap_test();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
     task::run_first_task();
-    panic!("Unreachable in rust_main!");
 }

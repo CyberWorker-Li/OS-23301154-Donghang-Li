@@ -25,13 +25,14 @@ pub struct TaskManager {
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
-        println!("init TASK_MANAGER");
         let num_app = get_num_app();
-        println!("num_app = {}", num_app);
         let mut tasks: Vec<TaskControlBlock> = Vec::new();
-        for i in 0..num_app {
-            tasks.push(TaskControlBlock::new(get_app_data(i), i));
+        if num_app == 0 {
+            crate::sbi::shutdown();
         }
+        let last_app_id = num_app - 1;
+        tasks.push(TaskControlBlock::new(get_app_data(last_app_id), 0));
+        let num_app = tasks.len();
         TaskManager {
             num_app,
             inner: unsafe { UPSafeCell::new(TaskManagerInner { tasks, current_task: 0 }) },
@@ -96,13 +97,14 @@ impl TaskManager {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);
             }
         } else {
-            panic!("All applications completed!");
+            println!("[kernel] All applications completed!");
+            crate::sbi::shutdown();
         }
     }
 }
 
-pub fn run_first_task() {
-    TASK_MANAGER.run_first_task();
+pub fn run_first_task() -> ! {
+    TASK_MANAGER.run_first_task()
 }
 
 fn run_next_task() {

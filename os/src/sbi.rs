@@ -35,6 +35,7 @@ pub fn console_getchar() -> usize {
 }
 
 pub fn shutdown() -> ! {
+    sbi_call(SBI_SHUTDOWN, 0, 0, 0);
     loop {
         unsafe { core::arch::asm!("wfi"); }
     }

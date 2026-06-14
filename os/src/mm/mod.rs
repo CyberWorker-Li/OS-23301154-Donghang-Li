@@ -21,7 +21,5 @@ pub fn init() {
     heap_allocator::heap_test();
     frame_allocator::init_frame_allocator();
     frame_allocator::frame_allocator_test();
-    println!("before activate");
     KERNEL_SPACE.exclusive_access().activate();
-    println!("after activate");
 }

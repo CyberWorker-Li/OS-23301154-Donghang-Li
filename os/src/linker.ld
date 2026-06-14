@@ -45,7 +45,7 @@ SECTIONS
     . = ALIGN(4K);
     ebss = .;
     ekernel = .;
-    sbss_with_stack = sbss;
+    sbss_with_stack = boot_stack;
 
     /DISCARD/ : {
         *(.eh_frame)
