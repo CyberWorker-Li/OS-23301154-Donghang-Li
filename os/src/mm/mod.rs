@@ -13,7 +13,14 @@ pub use address::{
     StepByOne,
 };
 pub use frame_allocator::{FrameTracker, frame_alloc};
-pub use page_table::{PageTable, PageTableEntry, PTEFlags, translated_byte_buffer};
+pub use page_table::{
+    PageTable,
+    PageTableEntry,
+    PTEFlags,
+    translated_byte_buffer,
+    translated_refmut,
+    translated_str,
+};
 pub use memory_set::{MemorySet, KERNEL_SPACE, MapPermission, remap_test};
 
 pub fn init() {
